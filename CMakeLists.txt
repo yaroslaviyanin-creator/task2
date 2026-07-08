@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 
 project(MyProject C)
 
+#Блок размером N байт
+add_compile_definitions(N=1024) 
+
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
