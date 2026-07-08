@@ -20,8 +20,10 @@ int main(int argc, char* argv[]) {
     const char* search_seq = argv[3];
     const char* replace_seq = argv[4];
 
-    printf("N: %d\n", N); //Блок N байт
-    printf("Files: %s -> %s\n", input_file, output_file);
+    int result = process_file(input_file, output_file, search_seq, replace_seq);
+    if (result != 0) {
+        return result;
+    }
 
     return 0;
 }
