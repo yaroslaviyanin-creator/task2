@@ -15,10 +15,11 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    const char* input_file = argv[1];
-    const char* output_file = argv[2];
-    const char* search_seq = argv[3];
-    const char* replace_seq = argv[4];
+    char* input_file = argv[1];
+    char* output_file = argv[2];
+    char* search_seq = argv[3];
+    char* replace_seq = argv[4];
+
 
     int result = process_file(input_file, output_file, search_seq, replace_seq);
     if (result != 0) {
