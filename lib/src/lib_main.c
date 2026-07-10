@@ -21,12 +21,6 @@ char vstr_symbol(const char* s, int vindex) {
     return s[vindex];
 }
 
-// Структура элемента массива mas_index
-typedef struct {
-    size_t abs_index;       // абсолютный индекс символа во входном файле
-    size_t search_index;    // индекс в искомой строке search докуда совпала подстрока
-} TIndex;
-
 // Заполняем массив mas_index значением по умолчанию = -1
 void init_mas_index(TIndex* mas_index, size_t searchlen) {
     for (int i = 0; i <= searchlen; i++) {
@@ -64,20 +58,39 @@ void compact_array(TIndex* mas_index, size_t searchlen) {
 int process_file(const char* in_path, const char* out_path, const char* search, const char* replace) {
     FILE* in_file = fopen(in_path, "rb");
     if (in_file == NULL) {
-        fprintf(stderr, "Error: Cannot open %s\n", in_path);
+        fprintf(stderr, "Error: Cannot open input file %s\n", in_path);
         return 1;
     }
 
     FILE* out_file = fopen(out_path, "wb");
     if (out_file == NULL) {
-        fprintf(stderr, "Error: Cannot create %s\n", out_path);
+        fprintf(stderr, "Error: Cannot create output file %s\n", out_path);
         fclose(in_file);
-        return 2;
+        return 1;
     }
 
-    printf("Files opened\n");
+    printf("Files opened successfully.\n");
+    
+    char buf[N];                // buf - считываемый блок (массив) символов из файла 
+    size_t b_read;              // b_read - количество считанных символов в блоке
+    size_t i;                   // i - переменная цикла
+    char b;                     // b - текущий символ
 
-    //...
+    //*****************************************************//
+    // Работаем с блоками размера N байт из входного файла //
+    //*****************************************************//
+    
+    // Считываем блоки, пока не дойдем до конца
+    while ((b_read = fread(buf, 1, N, in_file)) > 0) {
+        for (i = 0; i < b_read; i++) {
+            b = buf[i];                        // b - текущий (рассматриваемый) символ из считанного блока 
+
+            // Записываем символ в выходной файл
+            fwrite(&b, 1, 1, out_file);
+
+            //...
+        }
+    }
 
     fclose(in_file);
     fclose(out_file);
