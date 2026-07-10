@@ -76,7 +76,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     size_t b_count = -1;        // b_count - текущее количество считанных блоков из файла уменьшенное на 1, чтобы отсчет начинался с 0
     size_t abs_cur_index;       // abs_cur_index - абсолютное смещение текущего символа относительно начала входного файла
     size_t cur_mas_index;       // cur_mas_index - индекс текущего элемента массива mass_index
-    size_t i;                   // i - переменная цикла
+    size_t i, j;                // i, j - переменные цикла
     char b;                     // b - текущий символ
 
     int searchlen = vstrlen(search);                // searchlen - виртуальная длина искомой строки
@@ -115,6 +115,24 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
             b = buf[i];                        // b - текущий (рассматриваемый) символ из считанного блока 
             abs_cur_index = b_count * N + i;   // абсолютное значение индекса данного символа относительно начала входного файла
 
+            
+            // В цикле проходим по элементам массива mas_index (по найденным подстрокам)
+            for (j = 0; j <= searchlen; j++) {
+                if (mas_index[j].abs_index != -1) { // Если элемент не пустой, т.е. есть найденная подстрока
+                    // Если символ b совпал с очередным символов строки search в уже найденной подстроке
+                    if (b == vstr_symbol(search, mas_index[j].search_index + 1)) {
+                        if (mas_index[j].search_index < 10000)        // Это условие для тестирования, потом уберем.
+                            mas_index[j].search_index += 1;        // то в поле количества совпавших символов подстроки добавляем 1
+                    }
+                    else {      // Текущий символ b не совпал с ожидаемым символов из исследуемой строки
+                        // Заменим значение поля количества совпавших символов подстроки на число больше 10000
+                        if (mas_index[j].search_index < 10000)        // Это условие для тестирования, потом уберем.
+                            mas_index[j].search_index += 10000;
+                    }
+                }
+            }
+
+
             // Записываем символ в выходной файл
             fwrite(&b, 1, 1, out_file);
 
@@ -134,8 +152,9 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     }
 
     // Выводим содержимое массива mass_index на экран для визуальной проверки выполнения алгоритма
+    // Во втором поле хранится количество совпавших символов подстрок с исходной строкой, уменьшенное на 1, и откинем 10000
     for (i = 0; i <= searchlen; i++)
-        printf("i = %d  [ %d ] [ %d ]\n", i, mas_index[i].abs_index, mas_index[i].search_index);
+        printf("i = %d  [ %d ] [ %d ]\n", i, mas_index[i].abs_index, mas_index[i].search_index-10000);
 
     fclose(in_file);
     fclose(out_file);
