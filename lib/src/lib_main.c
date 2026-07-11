@@ -236,6 +236,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
                     j++;    // перемещаемся к следующему элементу массива mas_index 
                 }
                 else {      // Текущий символ b не совпал с ожидаемым символов из исследуемой строки
+
                     // Записываем в выходной файл первые символы от исследуемой строки, которые вначале совпадали 
                     if (j == 0) {   // Если это была первая подстрока, то записываем в выходной файл 
                         // первые символы от исследуемой строки, которые вначале совпадали c исследуемой строкой
@@ -260,11 +261,23 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
                 }
             }
                      
-            // Текущий символ совпал с началом исследуемой строки и не было подмены строки
-            if ((b == vstr_symbol(search, 0)) && (!flag_podmena_str)) {
-                cur_mas_index = empty_index_mas_index(mas_index, searchlen);    // Ищем первый пустой элемент в массиве mas_index
-                mas_index[cur_mas_index].abs_index = abs_cur_index;             // Записываем в него информацию о новой подстроки
-                mas_index[cur_mas_index].search_index = 0;
+            // Текущий символ совпал с началом исследуемой строки 
+            if (b == vstr_symbol(search, 0)) {
+                if (searchlen == 1) {   // Если длина исследуемой строки = 1
+                    // Выводим строку для замены в выходной файл
+                    for (z = 0; z < replacelen; z++) {
+                        tmp = vstr_symbol(replace, z);
+                        fwrite(&tmp, 1, 1, out_file);
+                    }
+                    flag_podmena_str = 1;                    // Устнавливаем флаг, что произошла подмена строк
+                }
+                else if (!flag_podmena_str) {    // Длина исследуемой строки > 1 и не было подмены строки
+                    cur_mas_index = empty_index_mas_index(mas_index, searchlen);    // Ищем первый пустой элемент в массиве mas_index
+                    mas_index[cur_mas_index].abs_index = abs_cur_index;             // Записываем в него информацию о новой подстроки
+                    mas_index[cur_mas_index].search_index = 0;
+                }
+          
+
             }
             
             compact_array(mas_index, searchlen);   // Уплотняем массив
