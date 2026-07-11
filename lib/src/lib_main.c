@@ -36,28 +36,65 @@ int hextodec(const char c) {
     return chislo;
 }
 
-// vstr_symbol - значение символа по индексу vindex в строке s 
+// Функция вывода текстовых сообщений ошибок
+void print_error(const int r) {
+    switch (r) {
+    case -2:     // Ошибка: -2. Не хватает символа после '\'.
+        fprintf(stderr, "Error: Missing character after \'\\\'.\n");
+        break;
+    case -3:     // Ошибка: -3. Неверный символ после '\'. Ожидается 'x', 'X' или '\'.
+        fprintf(stderr, "Error: Invalid character after \'\\\'. Expected \'x\', \'X\', or \'\\\'.\n");
+        break;
+    case -4:     // Ошибка: -4. Не хватает цифр для 16-тиричного кода символа. Нужно 2 цифры.
+        fprintf(stderr, "Error: There are not enough digits for the 16-digit character code. You need 2 digits.\n");
+        break;
+    case -5:     // Ошибка: -5. Неверные цифры 16-тиричного кода символа.
+        fprintf(stderr, "Error: Incorrect digits in the 16-bit character code.\n");
+        break;
+    default:
+        // Неизвестная ошибка. Если ни одно из значений case не совпало.
+        fprintf(stderr, "Error: Unknown error.\n");
+        break;
+    }
+    exit(1);  // Критическое завершение программы
+}
+
+// vstr_symbol - значение виртуального символа по индексу vindex в строке s 
 // vindex - виртуальный индекс символа в строке s
 char vstr_symbol(const char* s, int vindex) {
     int i = 0;                      // переменная цикла
     int cur_index = 0;              // текущий индекс символа
     char cur_char;                  // текущий символ
 
+    // Пока строка не закончилась или не найден нужный по счету виртуальный символ
     while ((i < strlen(s)) && (cur_index <= vindex)) {
-        // Если четыре подряд идущих символа являются 16-тиричным кодом символа
-        if ((i < strlen(s)-3) && (s[i] == '\\') && (tolower(s[i + 1]) == 'x') && ishexcode(s[i + 2]) && ishexcode(s[i + 3])) {
-            cur_char = hextodec(s[i + 2]) * 16 + hextodec(s[i + 3]);    // Высчитываем значение 16-тиричного кода
-            i += 4;                                                     // Сдвигаем переменную цикла на 4 позиции
+        
+        if (s[i] == '\\') {                 // Если текущий символ '\'
+            if (i + 1 < strlen(s)) {        // и есть ещё один символ после него.
+                if (s[i + 1] == '\\') {     // Если следующий символ после '\' тоже '\',
+                    cur_char = '\\';        // то это код обратного слеша.
+                    i += 2;                 // Сдвигаем переменную цикла на 2 позиции
+                }
+                else if (tolower(s[i + 1]) == 'x') {    // Если следующий символ после '\' является 'x' или 'X', то это начало 16-тиричного кода символа.            
+                    if (i + 3 < strlen(s)) {            // и есть ещё два символа после.
+                        if (ishexcode(s[i + 2]) && ishexcode(s[i + 3])) {               // Если эти символы являются цифрами в 16 с.с.,
+                            cur_char = hextodec(s[i + 2]) * 16 + hextodec(s[i + 3]);    // то вычисляем значение 16-тиричного кода
+                            i += 4;                                                     // и сдвигаем переменную цикла на 4 позиции.
+                        }
+                        else print_error(-5); // Ошибка: -5. Неверные цифры 16-тиричного кода символа.
+                    }
+                    else print_error(-4);     // Ошибка: -4. Не хватает цифр для 16-тиричного кода символа. Нужно 2 цифры. 
+                }
+                else print_error(-3);         // Ошибка: -3. Неверный символ после '\'. Ожидается 'x', 'X' или '\'. 
+            }
+            else print_error(-2);             // Ошибка: -2. Не хватает символа после '\'.
         }
-        else if ((s[i] == '\\') && (s[i+1] == '\\')) {      // Если код обратного слеша
-            cur_char = '\\';
-            i += 2;
-        }
-        else { 
+        
+        else {      // Иначе текущий символ остается без изменений
             cur_char = s[i];
             i++;
         }
-        if (cur_index == vindex) return cur_char;
+        if (cur_index == vindex) return cur_char;   // Если нашли нужный по счету виртуальный символ
         cur_index++;
     }
     return -1;
@@ -104,6 +141,11 @@ void print_array(TIndex* mas_index, size_t searchlen) {
 
 
 int process_file(const char* in_path, const char* out_path, const char* search, const char* replace) {
+    
+    // Проверяем корректность введенных строк в виде аргументов, получая их виртуальные длины
+    int searchlen  = vstrlen(search);               // searchlen - виртуальная длина искомой строки
+    int replacelen = vstrlen(replace);              // replacelen - виртуальная длина строки для замены
+
     FILE* in_file = fopen(in_path, "rb");
     if (in_file == NULL) {
         fprintf(stderr, "Error: Cannot open input file %s\n", in_path);
@@ -129,9 +171,6 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     char tmp;                   // tmp - переменная для временного символа для вывода в файл
     size_t count_symbol;        // count_symbol - количество символов для записи в выходной файл от начала исследуемой строки search
     int flag_podmena_str;       // 0 - не было замены; 1 - была замена
-
-
-    int searchlen = vstrlen(search);                // searchlen - виртуальная длина искомой строки
 
     /*printf("searchlen = %d\n", searchlen);
     printf(">%c<\n", vstr_symbol(search, 0));
@@ -186,7 +225,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
                     // Если закончилась, то в выходной файл выводим подмену строки и очищаем массив индексов
                     if (mas_index[j].search_index == searchlen-1) {
                         // Выводим подмену строки в выходной файл
-                        for (z = 0; z < vstrlen(replace); z++) {
+                        for (z = 0; z < replacelen; z++) {
                             tmp = vstr_symbol(replace, z);
                             fwrite(&tmp, 1, 1, out_file);
                         }
@@ -237,6 +276,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     }
 
     // Если при завершении входного файла массив индексов mas_index не пустой, то переписываем в выходной файл начало исследуемой строки
+    // Переписываем столько символов, сколько было найденных при совпадении в первом элементе массива mas_index[0]
     if (empty_index_mas_index(mas_index, searchlen) != 0) {
         for (z = 0; z <= mas_index[0].search_index; z++) {
             tmp = vstr_symbol(search, z);
