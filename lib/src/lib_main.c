@@ -18,6 +18,14 @@ int vstrlen(const char* s) {
 // vstr_symbol - значение символа по индексу vindex в строке s 
 // vindex - виртуальный индекс символа в строке s
 char vstr_symbol(const char* s, int vindex) {
+    /*int i = 0;
+    while (i < strlen(s)) {
+    
+        i++;
+    }
+    */
+
+
     return s[vindex];
 }
 
@@ -54,6 +62,12 @@ void compact_array(TIndex* mas_index, size_t searchlen) {
     }
  }
 
+// Функция для отладки. Вывод массива mas_index на экран
+void print_array(TIndex* mas_index, size_t searchlen) {
+    for (int y = 0; y <= searchlen; y++)
+        printf("i = %d  [ %d ] [ %d ]\n", y, mas_index[y].abs_index, mas_index[y].search_index);
+}
+
 
 int process_file(const char* in_path, const char* out_path, const char* search, const char* replace) {
     FILE* in_file = fopen(in_path, "rb");
@@ -84,8 +98,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
 
 
     int searchlen = vstrlen(search);                // searchlen - виртуальная длина искомой строки
-
-
+    
     //***********************************************************************************************//
     // Выделяем память под одномерный массив mas_index, где количество элементов = searchlen + 1.    //
     // Элементами массива являются структуры из двух полей:                                          //
@@ -130,7 +143,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
 
                     // Очередной символ строки совпал, проверяем, а не закончилась ли сверяемая строка
                     // Если закончилась, то в выходной файл выводим подмену строки и очищаем массив индексов
-                    if (mas_index[j].search_index == searchlen - 1) {
+                    if (mas_index[j].search_index == searchlen-1) {
                         // Выводим подмену строки в выходной файл
                         for (z = 0; z < vstrlen(replace); z++) {
                             tmp = vstr_symbol(replace, z);
@@ -157,30 +170,36 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
                     // Очистка информации о данной (переставшей совпадать) подстроки в массиве mas_index.
                     mas_index[j].abs_index = -1;
                     mas_index[j].search_index = -1;
+                    
                     compact_array(mas_index, searchlen);        // Уплотнение массива (избавляемся от пустых мест сначала массива).
+                                        
                     // Посде очистки элемента массива и его уплотнения переменная j теперь указывает на следующий по значениям элемент в этом массиве.
                     // Инкрементировать значение j нет необходимости, чтобы перейти к следующему элементу массива mas_index, 
                     // мы уже автоматически находимся на следующем элементе.
                 }
             }
-
-
-            // Фиксируем первые ИКС вхождений первого символа исследуемой строки во входном файле в массиве mass_index
-            // ИКС - это количество символов в исследуемой строке + 1, больше данного количества подстрок одновпременно нам не нужно
-            
-            // Текущий символ совпал с началом исследуемой строки
-            if (b == vstr_symbol(search, 0)) {
+                     
+            // Текущий символ совпал с началом исследуемой строки и не было подмены строки
+            if ((b == vstr_symbol(search, 0)) && (!flag_podmena_str)) {
                 cur_mas_index = empty_index_mas_index(mas_index, searchlen);    // Ищем первый пустой элемент в массиве mas_index
                 mas_index[cur_mas_index].abs_index = abs_cur_index;             // Записываем в него информацию о новой подстроки
                 mas_index[cur_mas_index].search_index = 0;
             }
             
-            compact_array(mas_index, searchlen);   // Уплотнаяем массив
+            compact_array(mas_index, searchlen);   // Уплотняем массив
 
             // Если массив индексов пустой (нет найденных частей подстрок) и не было подмены строки, то выводим текущий символ в выходной файл
             if ((empty_index_mas_index(mas_index, searchlen) == 0) && (!flag_podmena_str)) {
                 fwrite(&b, 1, 1, out_file);
             }
+        }
+    }
+
+    // Если при завершении входного файла массив индексов mas_index не пустой, то переписываем в выходной файл начало исследуемой строки
+    if (empty_index_mas_index(mas_index, searchlen) != 0) {
+        for (z = 0; z <= mas_index[0].search_index; z++) {
+            tmp = vstr_symbol(search, z);
+            fwrite(&tmp, 1, 1, out_file);
         }
     }
 
