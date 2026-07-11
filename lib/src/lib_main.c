@@ -40,23 +40,23 @@ int hextodec(const char c) {
 void print_error(const int r) {
     switch (r) {
     case -2:     // Ошибка: -2. Не хватает символа после '\'.
-        fprintf(stderr, "Error: Missing character after \'\\\'.\n");
+        fprintf(stderr, ". Error: Missing character after \'\\\'.\n");
         break;
     case -3:     // Ошибка: -3. Неверный символ после '\'. Ожидается 'x', 'X' или '\'.
-        fprintf(stderr, "Error: Invalid character after \'\\\'. Expected \'x\', \'X\', or \'\\\'.\n");
+        fprintf(stderr, ". Error: Invalid character after \'\\\'. Expected \'x\', \'X\', or \'\\\'.\n");
         break;
     case -4:     // Ошибка: -4. Не хватает цифр для 16-тиричного кода символа. Нужно 2 цифры.
-        fprintf(stderr, "Error: There are not enough digits for the 16-digit character code. You need 2 digits.\n");
+        fprintf(stderr, ". Error: There are not enough digits for the 16-digit character code. You need 2 digits.\n");
         break;
     case -5:     // Ошибка: -5. Неверные цифры 16-тиричного кода символа.
-        fprintf(stderr, "Error: Incorrect digits in the 16-bit character code.\n");
+        fprintf(stderr, ". Error: Incorrect digits in the 16-bit character code.\n");
         break;
     default:
         // Неизвестная ошибка. Если ни одно из значений case не совпало.
         fprintf(stderr, "Error: Unknown error.\n");
         break;
     }
-    exit(1);  // Критическое завершение программы
+    exit(1);  // Завершение программы
 }
 
 // vstr_symbol - значение виртуального символа по индексу vindex в строке s 
@@ -142,9 +142,16 @@ void print_array(TIndex* mas_index, size_t searchlen) {
 
 int process_file(const char* in_path, const char* out_path, const char* search, const char* replace) {
     
-    // Проверяем корректность введенных строк в виде аргументов, получая их виртуальные длины
+    // Проверяем корректность введенных строк в виде аргументов, получая их виртуальные длины,
+    // с выводом соответствующих сообщений на экран.
+    printf("The search string");
     int searchlen  = vstrlen(search);               // searchlen - виртуальная длина искомой строки
+    if (searchlen >= 0) printf(" is correct.\n");
+    
+    printf("The replace string");
     int replacelen = vstrlen(replace);              // replacelen - виртуальная длина строки для замены
+    if (replacelen >= 0) printf(" is correct.\n");
+    
 
     FILE* in_file = fopen(in_path, "rb");
     if (in_file == NULL) {
@@ -172,13 +179,7 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     size_t count_symbol;        // count_symbol - количество символов для записи в выходной файл от начала исследуемой строки search
     int flag_podmena_str;       // 0 - не было замены; 1 - была замена
 
-    /*printf("searchlen = %d\n", searchlen);
-    printf(">%c<\n", vstr_symbol(search, 0));
-    printf(">%c<\n", vstr_symbol(search, 1));
-    printf(">%c<\n", vstr_symbol(search, 2));
-    printf(">%c<\n", vstr_symbol(search, 3));
-    */
-
+  
     //***********************************************************************************************//
     // Выделяем память под одномерный массив mas_index, где количество элементов = searchlen + 1.    //
     // Элементами массива являются структуры из двух полей:                                          //
