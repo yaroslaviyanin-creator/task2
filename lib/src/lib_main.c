@@ -76,8 +76,11 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
     size_t b_count = -1;        // b_count - текущее количество считанных блоков из файла уменьшенное на 1, чтобы отсчет начинался с 0
     size_t abs_cur_index;       // abs_cur_index - абсолютное смещение текущего символа относительно начала входного файла
     size_t cur_mas_index;       // cur_mas_index - индекс текущего элемента массива mass_index
-    size_t i, j;                // i, j - переменные цикла
+    size_t i, j, z;             // i, j, z - переменные цикла
     char b;                     // b - текущий символ
+    char tmp;                   // tmp - переменная для временного символа для вывода в файл
+
+
 
     int searchlen = vstrlen(search);                // searchlen - виртуальная длина искомой строки
 
@@ -123,6 +126,16 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
                     if (b == vstr_symbol(search, mas_index[j].search_index + 1)) {
                         if (mas_index[j].search_index < 10000)        // Это условие для тестирования, потом уберем.
                             mas_index[j].search_index += 1;        // то в поле количества совпавших символов подстроки добавляем 1
+
+                        // Очередной символ строки совпал, проверяем, а не закончилась ли сверяемая строка
+                        // Если закончилась, то в выходной файл выводим подмену строки
+                        if (mas_index[j].search_index == searchlen - 1) {
+                            // Выводим подмену строки в выходной файл
+                            for (z = 0; z < vstrlen(replace); z++) {
+                                tmp = vstr_symbol(replace, z);
+                                fwrite(&tmp, 1, 1, out_file);
+                            }
+                        }
                     }
                     else {      // Текущий символ b не совпал с ожидаемым символов из исследуемой строки
                         // Заменим значение поля количества совпавших символов подстроки на число больше 10000
