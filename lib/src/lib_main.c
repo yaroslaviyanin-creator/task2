@@ -11,22 +11,56 @@ lib_main.c - главный модуль библиотеки.
 
 // vstrlen - длина виртуальной строки
 int vstrlen(const char* s) { 
-    return strlen(s);
+    int i = 0;              // переменная цикла
+
+    // Пока находятся виртуальные символы в строке, выполняем цикл
+    while ((i < strlen(s)) && (vstr_symbol(s, i) != -1)) i++;
+    return i;
 }
 
+// Проверка символа на принадлежность к алфавиту 16 с.с.
+int ishexcode(const char c) {
+    char ch = tolower(c);               // Преобразует заглавные латинские буквы в строчные
+    int  a = ch >= '0' && ch <= '9';
+    int  b = ch >= 'a' && ch <= 'f';
+    if (a || b) return 1;
+    else return 0;
+}
+
+// Превращение символа из 16 с.с. в число 10 с.с.
+int hextodec(const char c) {
+    char ch = tolower(c);               // Преобразует заглавные латинские буквы в строчные
+    int chislo;
+    if (ch >= '0' && ch <= '9') chislo = ch - '0';
+    if (ch >= 'a' && ch <= 'f') chislo = ch - 'a' + 10;
+    return chislo;
+}
 
 // vstr_symbol - значение символа по индексу vindex в строке s 
 // vindex - виртуальный индекс символа в строке s
 char vstr_symbol(const char* s, int vindex) {
-    /*int i = 0;
-    while (i < strlen(s)) {
-    
-        i++;
+    int i = 0;                      // переменная цикла
+    int cur_index = 0;              // текущий индекс символа
+    char cur_char;                  // текущий символ
+
+    while ((i < strlen(s)) && (cur_index <= vindex)) {
+        // Если четыре подряд идущих символа являются 16-тиричным кодом символа
+        if ((i < strlen(s)-3) && (s[i] == '\\') && (tolower(s[i + 1]) == 'x') && ishexcode(s[i + 2]) && ishexcode(s[i + 3])) {
+            cur_char = hextodec(s[i + 2]) * 16 + hextodec(s[i + 3]);    // Высчитываем значение 16-тиричного кода
+            i += 4;                                                     // Сдвигаем переменную цикла на 4 позиции
+        }
+        else if ((s[i] == '\\') && (s[i+1] == '\\')) {      // Если код обратного слеша
+            cur_char = '\\';
+            i += 2;
+        }
+        else { 
+            cur_char = s[i];
+            i++;
+        }
+        if (cur_index == vindex) return cur_char;
+        cur_index++;
     }
-    */
-
-
-    return s[vindex];
+    return -1;
 }
 
 // Заполняем массив mas_index значением по умолчанию = -1
@@ -65,7 +99,7 @@ void compact_array(TIndex* mas_index, size_t searchlen) {
 // Функция для отладки. Вывод массива mas_index на экран
 void print_array(TIndex* mas_index, size_t searchlen) {
     for (int y = 0; y <= searchlen; y++)
-        printf("i = %d  [ %d ] [ %d ]\n", y, mas_index[y].abs_index, mas_index[y].search_index);
+        printf("i = %d  [ %zd ] [ %zd ]\n", y, mas_index[y].abs_index, mas_index[y].search_index);
 }
 
 
@@ -98,7 +132,14 @@ int process_file(const char* in_path, const char* out_path, const char* search, 
 
 
     int searchlen = vstrlen(search);                // searchlen - виртуальная длина искомой строки
-    
+
+    /*printf("searchlen = %d\n", searchlen);
+    printf(">%c<\n", vstr_symbol(search, 0));
+    printf(">%c<\n", vstr_symbol(search, 1));
+    printf(">%c<\n", vstr_symbol(search, 2));
+    printf(">%c<\n", vstr_symbol(search, 3));
+    */
+
     //***********************************************************************************************//
     // Выделяем память под одномерный массив mas_index, где количество элементов = searchlen + 1.    //
     // Элементами массива являются структуры из двух полей:                                          //
